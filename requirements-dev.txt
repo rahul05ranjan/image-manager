@@ -1,0 +1,4 @@
+pillow
+pytest
+ruff
+mypy
