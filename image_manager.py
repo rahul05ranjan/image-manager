@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import argparse
 import math
 import pathlib
-import sys
 
 from PIL import Image as PillowImage
 
@@ -12,21 +13,19 @@ def convert_jpgs_to_pngs(path: pathlib.Path) -> None:
     # Confirm path is a valid directory or file
     if not (path.is_file() or path.is_dir()):
         if not path.is_file():
-            raise FileNotFoundError(
-                f"path provided is not a file: '{path.absolute()}'"
-            )
+            raise FileNotFoundError(f"path provided is not a file: '{path.absolute()}'")
         if not path.is_dir():
             raise NotADirectoryError(
                 f"path provided is not a directory: '{path.absolute()}'"
             )
-    
+
     # Recursively iterate through contents of directory
     for path_item in path.iterdir():
         if path_item.is_dir():
             convert_jpgs_to_pngs(path_item)
         elif path_item.is_file():
             convert_jpg_to_png(path_item)
-    
+
 
 def convert_jpg_to_png(filepath: pathlib.Path) -> None:
     """Convert given JPEG image to PNG."""
@@ -44,13 +43,13 @@ def convert_jpg_to_png(filepath: pathlib.Path) -> None:
 
 
 def OLDconvert_jpg_to_png(directory: pathlib.Path, do_keep=True, depth=0) -> None:
-    print(f"{" " * depth}[{directory.name}]")
+    print(f"{' ' * depth}[{directory.name}]")
     depth += 1
     for path_item in directory.iterdir():
         if path_item.is_dir():
-            convert_jpg_to_png(path_item, do_keep, depth)
+            convert_jpg_to_png(path_item)
         else:
-            print(f"{" " * depth}{path_item.name}", end="")
+            print(f"{' ' * depth}{path_item.name}", end="")
 
             new_filename = f"{sanitize_name(path_item.stem)}.png"
             do_rename = False
@@ -58,21 +57,21 @@ def OLDconvert_jpg_to_png(directory: pathlib.Path, do_keep=True, depth=0) -> Non
                 do_rename = True
                 print(f" -> {new_filename}", end="")
 
-            new_path = f"{str(path_item.parent)}/{new_filename}"
+            new_path = f"{path_item.parent!s}/{new_filename}"
             new_file = pathlib.Path(new_path)
 
             if is_jpg(path_item):
-                img = PIL.Image.open(path_item, "r", ["JPEG"])
+                img = PillowImage.open(path_item, "r", ["JPEG"])
                 img.save(new_path, "PNG")
                 img.close()
-                print(f" (converted)", end="")
+                print(" (converted)", end="")
 
                 if not do_keep:
-                    print(f" (old file deleted)", end="")
+                    print(" (old file deleted)", end="")
                     path_item.unlink()
             elif do_rename:
                 path_item.replace(new_file)
-                print(f" (renamed)", end="")
+                print(" (renamed)", end="")
             print()
 
 
@@ -118,7 +117,7 @@ def replace_special_characters(text: str) -> str:
 
 
 def prompt_directory_path() -> str:
-    return pathlib.Path(input("Please enter directory path: "))
+    return str(pathlib.Path(input("Please enter directory path: ")))
 
 
 def prompt_keep_old_files() -> bool:
@@ -127,20 +126,19 @@ def prompt_keep_old_files() -> bool:
         keep == "" or keep.lower().startswith("y") or keep.lower().startswith("n")
     ):
         keep = input("Keep old JPG/JPEG files? [Y]/[n]: ")
-    if keep == "" or keep.lower().startswith("y"):
-        return True
-    return False
+    return bool(keep == "" or keep.lower().startswith("y"))
 
 
-def prompt_resize() -> tuple[int, int]:
+def prompt_resize() -> tuple[int, int] | None:
     resize = None
     while resize is None or not (resize.lower() in ("", "y", "n")):
         resize = input("Resize files? [y]/[N]: ")
     if resize == "":
         return None
 
-    width = height = None
-    while None in (width, height) or not (width.isdigit() and height.isdigit()):
+    width: str = ""
+    height: str = ""
+    while "" in (width, height) or not (width.isdigit() and height.isdigit()):
         width_height = input("Enter width and height: ")
         delimeter = " "
         if "," in width_height:
@@ -158,7 +156,7 @@ def resize_images(
         if path_item.is_dir():
             resize_images(path_item, resize)
         else:
-            img = PIL.Image.open(path_item)
+            img = PillowImage.open(path_item)
 
             # # Maintain orientation - TODO - Doesn't work all the time
             # o_width, o_height = img.size
@@ -169,7 +167,7 @@ def resize_images(
             new_path_item = path_item
             if not path_item.stem.endswith(resize_suffix):
                 new_path_item = pathlib.Path(
-                    f"{str(path_item.parent)}/"
+                    f"{path_item.parent!s}/"
                     + f"{path_item.stem}{resize_suffix}{path_item.suffix}"
                 )
             resized.save(new_path_item)
@@ -178,21 +176,18 @@ def resize_images(
 
 
 def remove_corners(directory: pathlib.Path, corner_radius: int) -> None:
-    lengths = (corner_radius,)
+    lengths: tuple[int, ...] = (corner_radius,)
     lengths += tuple(
-        int(
-            round(
-                corner_radius - math.sqrt(corner_radius**2 - (corner_radius - y) ** 2)
-            )
-        ) + 1
+        round(corner_radius - math.sqrt(corner_radius**2 - (corner_radius - y) ** 2))
+        + 1
         for y in range(1, corner_radius)
     )
 
-    top_coordinates = tuple()
+    top_coordinates: tuple = ()
     for X, y in zip(lengths, range(corner_radius)):
         top_coordinates += tuple((x, y) for x in range(X))
 
-    bottom_coordinates = tuple()
+    bottom_coordinates: tuple = ()
     for X, y in zip(reversed(lengths), range(corner_radius)):
         bottom_coordinates += tuple((x, y) for x in range(X))
 
@@ -200,9 +195,9 @@ def remove_corners(directory: pathlib.Path, corner_radius: int) -> None:
 
     for path_item in directory.iterdir():
         if path_item.is_dir():
-            remove_corners(path_item)
+            remove_corners(path_item, corner_radius)
         else:
-            img = PIL.Image.open(path_item)
+            img = PillowImage.open(path_item)
             w = img.width
             h = img.height
 
@@ -226,16 +221,17 @@ def remove_corners(directory: pathlib.Path, corner_radius: int) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="ImageManager",
-        description="Modify image files in a given directory."
+        prog="ImageManager", description="Modify image files in a given directory."
     )
-    parser.add_argument("path", type=pathlib.Path, help="the path to directory of images to modify")
+    parser.add_argument(
+        "path", type=pathlib.Path, help="the path to directory of images to modify"
+    )
     args = parser.parse_args()
 
     try:
         convert_jpg_to_png(args.path)
-    except (FileNotFoundError, NotADirectoryError):
-        print(sys.exception())
+    except (FileNotFoundError, NotADirectoryError) as e:
+        print(e)
     print()
 
     # directory = prompt_directory_path()
