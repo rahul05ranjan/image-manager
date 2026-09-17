@@ -29,17 +29,24 @@ def convert_jpgs_to_pngs(path: pathlib.Path) -> None:
 
 def convert_jpg_to_png(filepath: pathlib.Path) -> None:
     """Convert given JPEG image to PNG."""
-    if is_jpg(filepath):
-        # Create new filepath with 'png' extension
-        new_filepath = pathlib.Path(f"{filepath.parent}/{filepath.stem}.png")
+    if not is_jpg(filepath):
+        return
 
-        # Create new PNG file from JPEG file
-        img = PillowImage.open(filepath, "r", ["JPEG"])
-        img.save(new_filepath, "PNG")
-        img.close()
+    # Create new filepath with 'png' extension
+    new_filepath = pathlib.Path(f"{filepath.parent}/{filepath.stem}.png")
 
-        # Remove the original JPEF file
-        filepath.unlink()
+    if new_filepath.exists():
+        raise FileExistsError(
+            f"destination file already exists: '{new_filepath}'"
+        )
+
+    # Create new PNG file from JPEG file
+    img = PillowImage.open(filepath, "r", ["JPEG"])
+    img.save(new_filepath, "PNG")
+    img.close()
+
+    # Remove the original JPEF file
+    filepath.unlink()
 
 
 def OLDconvert_jpg_to_png(directory: pathlib.Path, do_keep=True, depth=0) -> None:
@@ -229,18 +236,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        convert_jpg_to_png(args.path)
+        convert_jpgs_to_pngs(args.path)
     except (FileNotFoundError, NotADirectoryError) as e:
         print(e)
     print()
-
-    # directory = prompt_directory_path()
-    # convert_to_pngs(directory, prompt_keep_old_files())
-    # print()
-
-    # resize = prompt_resize()
-    # if resize is not None:
-    #     resize_images(directory, resize)
-    #     print(f"Images resized.\n")
-
-    # remove_corners(directory, 14)
