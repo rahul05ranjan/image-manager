@@ -1,5 +1,72 @@
 # image-manager
 
-- Covert JPGs to PNGs
-- Resize image files (larger/smaller)
-- Round corners of images
+A small Python command-line utility for batch image processing.
+
+The current CLI supports recursively converting JPEG images to PNG files within a directory.
+
+## Current Functionality
+
+- Convert `.jpg` / `.jpeg` images to `.png`
+- Process images recursively through nested directories
+- Preserve non-JPEG files
+- Refuse to overwrite an existing PNG with the same filename
+
+## Usage
+
+Install the runtime dependency:
+
+```bash
+pip install -r requirements.txt
+```
+
+Then run:
+
+```bash
+python image_manager.py <directory>
+```
+
+Example:
+
+```bash
+python image_manager.py ./images
+```
+
+JPEG files found in the directory and its subdirectories will be converted to PNG files.
+
+The original JPEG is removed after a successful conversion.
+
+If a PNG with the same filename already exists, the conversion will stop rather than overwrite the existing file.
+
+## Development
+
+Install the development dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Run the tests:
+
+```bash
+pytest -v
+```
+
+## Planned Functionality
+
+Additional image-processing functionality already exists in the codebase but is not yet exposed through the CLI.
+
+Planned features include:
+
+- resizing images
+- rounding image corners
+- additional filename/image-processing utilities
+
+These features should currently be considered experimental or incomplete from a user-facing perspective.
+
+## About This Project
+
+This is a small learning project focused on working with image files, filesystem operations, command-line interfaces, and automated testing in Python.
+
+## License
+
+Licensed under the MIT License. See [`LICENSE`](LICENSE).
